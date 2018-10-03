@@ -95,7 +95,7 @@ namespace FlashbackLight.Formats
                 {
                     if (entry.Filename == stxName)
                     {
-                        Strings = ((STX)entry.Contents).Strings;
+                        Strings = (new STX(entry.Contents)).Strings;
                         break;
                     }
                 }

@@ -71,30 +71,7 @@ namespace FlashbackLight.Formats
                 }
                 reader.BaseStream.Seek(dataPadding, SeekOrigin.Current);
 
-                // Convert the entry data into the appropriate format, based on file extension
-                string ext = entry.Filename.Split('.').Last().ToUpper();
-                switch (ext)
-                {
-                    case "DAT":
-
-                        break;
-
-                    case "SPC":
-                        entry.Contents = new SPC(data, entry.Filename);
-                        break;
-
-                    case "SRD":
-
-                        break;
-
-                    case "STX":
-                        entry.Contents = new STX(data);
-                        break;
-
-                    case "WRD":
-                        entry.Contents = new WRD(data, spcName, entry.Filename);
-                        break;
-                }
+                entry.Contents = data;
 
                 Entries.Add(entry);
             }
@@ -225,18 +202,18 @@ namespace FlashbackLight.Formats
         private byte[] DecompressEntry(byte[] cmpData)
         {
             List<byte> result = new List<byte>();
-            BinaryReader reader = new BinaryReader(new MemoryStream(cmpData));
+            MemoryStream reader = new MemoryStream(cmpData);
             long cmpSize = cmpData.LongLength;
 
             long flag = 1;
-            while (reader.BaseStream.Position < cmpSize)
+            while (reader.Position < cmpSize)
             {
                 if (flag == 1)
                     flag = 0x100 | (reader.ReadByte() * 0x0202020202 & 0x010884422010) % 1023;
 
                 if ((flag & 1) == 1)
                 {
-                    result.Add(reader.ReadByte());
+                    result.Add((byte)reader.ReadByte());
                 }
                 else
                 {
@@ -244,7 +221,7 @@ namespace FlashbackLight.Formats
                     // xxxxxxyy yyyyyyyy
                     // Count  -> x + 2 (max length of 65 bytes)
                     // Offset -> y (from the beginning of a 1023-byte sliding window)
-                    ushort b = reader.ReadUInt16();
+                    ushort b = (ushort)(reader.ReadByte() | (reader.ReadByte() << 8));
                     byte count = (byte)((b >> 10) + 2);
                     short offset = (short)(b & 1023);
 
@@ -267,6 +244,6 @@ namespace FlashbackLight.Formats
         public ushort CmpFlag;
         public ushort UnkFlag;
         public string Filename;
-        public V3Format Contents;
+        public byte[] Contents;
     }
 }
