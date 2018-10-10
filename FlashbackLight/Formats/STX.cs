@@ -45,7 +45,8 @@ namespace FlashbackLight.Formats
                 {
                     charList.Add(reader.ReadChar());
                 }
-                Strings.Add(new string(charList.ToArray()));
+                string finalString = new string(charList.ToArray()).Replace("\n", "\\n").Replace("\r","\\r");
+                Strings.Add(finalString);
             }
         }
 
@@ -53,7 +54,7 @@ namespace FlashbackLight.Formats
         {
             List<byte> result = new List<byte>();
 
-
+            // TODO: Remember to convert newline characters!
 
             return result.ToArray();
         }

@@ -87,7 +87,14 @@ namespace FlashbackLight.Formats
             {
                 // Strings are stored in the "(current spc name)_text_(region).spc" file,
                 // within an STX file with the same name as the current WRD file.
-                string textSPCName = spcName.Insert(spcName.LastIndexOf('.'), string.Format("_text_{0}", MainForm.RegionString));
+                string textSPCName = textSPCName = spcName.Insert(spcName.LastIndexOf('.'), string.Format("_text_{0}", MainForm.RegionString));
+                if (!File.Exists(textSPCName))
+                {
+                    // If the first filename fails, we probably need to remove a duplicate
+                    // region tag from the filename before "_text_".
+                    textSPCName = textSPCName.Remove(textSPCName.LastIndexOf("_text_") - 3, 3);
+                }
+
                 string stxName = wrdName.Replace(".wrd", ".stx");
                 byte[] spcData = File.ReadAllBytes(textSPCName);
                 SPC textSPC = new SPC(spcData, textSPCName);

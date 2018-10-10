@@ -69,9 +69,8 @@ namespace FlashbackLight.Formats
                 {
                     data = DecompressEntry(data);
                 }
-                reader.BaseStream.Seek(dataPadding, SeekOrigin.Current);
-
                 entry.Contents = data;
+                reader.BaseStream.Seek(dataPadding, SeekOrigin.Current);
 
                 Entries.Add(entry);
             }
