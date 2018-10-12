@@ -112,7 +112,7 @@ namespace FlashbackLight
                         argString.Insert(argString.Length, "!");    // Should this be (argString.Length - 1)?
                     }
 
-                    if (i + 1 < cmd.ArgData.Length)
+                    if (i + 1 < cmd.ArgData.Length && !cmd.IsVarLength)
                     {
                         argString += ", ";
                     }
@@ -148,6 +148,9 @@ namespace FlashbackLight
 
         private void currentSPCEntryList_DoubleClick(object sender, EventArgs e)
         {
+            if (currentSPC == null)
+                return;
+
             if (currentWRDFilename != currentSPC.Entries[currentSPCEntryList.SelectedIndex].Filename)
                 openScriptEntry(currentSPC.Entries[currentSPCEntryList.SelectedIndex].Filename);
         }

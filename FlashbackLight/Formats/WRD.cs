@@ -83,6 +83,7 @@ namespace FlashbackLight.Formats
             externalStrings = (stringsPointer == 0);
 
             // Read dialogue text strings
+            Strings = new List<string>();
             if (externalStrings)
             {
                 // Strings are stored in the "(current spc name)_text_(region).spc" file,
@@ -107,7 +108,6 @@ namespace FlashbackLight.Formats
                     }
                 }
             }
-            /*
             else
             {
                 reader.BaseStream.Seek(stringsPointer, SeekOrigin.Begin);
@@ -119,39 +119,33 @@ namespace FlashbackLight.Formats
                     // that means the length is actually stored in a signed short,
                     // since we can't have a negative string length.
                     // ┐(´∀｀)┌
-                    if ((byte)stream.device()->peek(1).at(0) >= 0x80)
+                    if ((byte)reader.PeekChar() >= 0x80)
                     {
-                        stream >> stringLen;
+                        stringLen = reader.ReadInt16();
                     }
                     else
                     {
-                        uchar c;
-                        stream >> c;
-                        stringLen = c;
+                        stringLen = reader.ReadByte();
                     }
                     stringLen += 2; // Null terminator
 
-                    QChar* stringData = new QChar[stringLen / 2];
-
+                    List<char> stringData = new List<char>(stringLen / 2);
                     for (int j = 0; j < (stringLen / 2); ++j)
                     {
-                        QChar chr = 0;
-                        stream >> chr;
-                        stringData[j] = chr;
+                        char c = Convert.ToChar(reader.ReadUInt16());
+                        stringData.Add(c);
 
                         // We can't always trust stringLen apparently, so break if we've hit a null terminator.
-                        if (chr == QChar(0))
+                        if (c == 0)
                             break;
                     }
 
-                    QString string = QString(stringData);
-                    string.replace('\r', "\\r");
-                    string.replace('\n', "\\n");
-                    result.strings.append(string);
-                    delete[] stringData;
+                    string str = new string(stringData.ToArray());
+                    str = str.Replace("\r", "\\r");
+                    str = str.Replace("\n", "\\n");
+                    Strings.Add(str);
                 }
             }
-            */
         }
 
         public override byte[] ToBytes()
