@@ -125,18 +125,47 @@ namespace FlashbackLight
             }
         }
 
+        private void showOpenErrorBox(Exception error, string filepath)
+        {
+            if (MessageBox.Show($"Failed to open {filepath}: \n\n{error.Message}\n\n{error.StackTrace}\n\nWould you like to copy this error to your clipboard?",
+                                    $"{Path.GetExtension(filepath)} Open Error: {error.Message}",
+                                    MessageBoxButtons.YesNo,
+                                    MessageBoxIcon.Error,
+                                    MessageBoxDefaultButton.Button2) == DialogResult.Yes)
+            {
+                Clipboard.SetText($"{error.Message}\n\n{error.StackTrace}");
+            }
+        }
+
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
             OpenFileDialog fd = new OpenFileDialog();
             fd.ShowDialog();
             string filepath = fd.FileName;
             
+            if (Path.GetExtension(filepath).ToLower() != ".spc")
+            {
+                if (MessageBox.Show("Selected file does not have the .SPC file extension. Attempt to open anyways?",
+                                    "SPC Extension Warning",
+                                    MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
+                {
+                    return;
+                }
+            }
             if (File.Exists(filepath))
             {
-                byte[] filedata;
-                filedata = File.ReadAllBytes(filepath);
-                currentSPC = new SPC(filedata, filepath);
-                currentSPCFilename = filepath;
+                try
+                {
+                    byte[] filedata;
+                    filedata = File.ReadAllBytes(filepath);
+                    currentSPC = new SPC(filedata, filepath);
+                    currentSPCFilename = filepath;
+                }
+                catch (Exception error)
+                {
+                    showOpenErrorBox(error, filepath);
+                    return;
+                }
             }
 
             currentSPCEntryList.Items.Clear();
@@ -151,8 +180,17 @@ namespace FlashbackLight
             if (currentSPC == null)
                 return;
 
-            if (currentWRDFilename != currentSPC.Entries[currentSPCEntryList.SelectedIndex].Filename)
-                openScriptEntry(currentSPC.Entries[currentSPCEntryList.SelectedIndex].Filename);
+            string entryFilename = currentSPC.Entries[currentSPCEntryList.SelectedIndex].Filename;
+            try
+            {
+                if (currentWRDFilename != entryFilename)
+                    openScriptEntry(entryFilename);
+            }
+            catch (Exception error)
+            {
+                showOpenErrorBox(error, entryFilename);
+                return;
+            }
         }
     }
 }

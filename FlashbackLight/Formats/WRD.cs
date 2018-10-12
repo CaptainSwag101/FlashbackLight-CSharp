@@ -94,6 +94,13 @@ namespace FlashbackLight.Formats
                     // If the first filename fails, we probably need to remove a duplicate
                     // region tag from the filename before "_text_".
                     textSPCName = textSPCName.Remove(textSPCName.LastIndexOf("_text_") - 3, 3);
+
+                    if (!File.Exists(textSPCName))
+                    {
+                        // If the file still doesn't exist, it's probably not
+                        // there and the strings should just be abandoned.
+                        return;
+                    }
                 }
 
                 string stxName = wrdName.Replace(".wrd", ".stx");
