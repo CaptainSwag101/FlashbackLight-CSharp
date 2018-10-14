@@ -116,14 +116,8 @@ namespace FlashbackLight.Formats
                     string stxName = wrdName.Replace(".wrd", ".stx");
                     byte[] spcData = File.ReadAllBytes(textSPCName);
                     SPC textSPC = new SPC(spcData, textSPCName);
-                    foreach (SPCEntry entry in textSPC.Entries)
-                    {
-                        if (entry.Filename == stxName)
-                        {
-                            Strings = (new STX(entry.Contents)).Strings;
-                            break;
-                        }
-                    }
+
+                    Strings = new STX(textSPC.Entries[stxName].Contents).Strings;
                 }
                 else
                 {
