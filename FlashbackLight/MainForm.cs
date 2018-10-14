@@ -145,7 +145,7 @@ namespace FlashbackLight
             
             if (Path.GetExtension(filepath).ToLower() != ".spc")
             {
-                if (MessageBox.Show("Selected file does not have the .SPC file extension. Attempt to open anyways?",
+                if (MessageBox.Show("Selected file does not have the .SPC file extension and may not load properly. Attempt to open anyways?",
                                     "SPC Extension Warning",
                                     MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
                 {
