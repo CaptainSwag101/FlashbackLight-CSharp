@@ -11,14 +11,14 @@ namespace FlashbackLight.Formats
     {
         public byte[] Unk1;
         public uint Unk2;
-        public List<SPCEntry> Entries;
+        public Dictionary<string, SPCEntry> Entries;
 
 
         public SPC()
         {
             Unk1 = new byte[0x24];
             Unk2 = 4;
-            Entries = new List<SPCEntry>();
+            Entries = new Dictionary<string, SPCEntry>();
         }
 
         public SPC(byte[] bytes, string spcName)
@@ -47,7 +47,7 @@ namespace FlashbackLight.Formats
             }
             reader.BaseStream.Seek(0x0C, SeekOrigin.Current);
 
-            Entries = new List<SPCEntry>();
+            Entries = new Dictionary<string, SPCEntry>();
             for (int i = 0; i < fileCount; i++)
             {
                 SPCEntry entry = new SPCEntry();
@@ -72,7 +72,7 @@ namespace FlashbackLight.Formats
                 entry.Contents = data;
                 reader.BaseStream.Seek(dataPadding, SeekOrigin.Current);
 
-                Entries.Add(entry);
+                Entries[entry.Filename] = entry;
             }
         }
 

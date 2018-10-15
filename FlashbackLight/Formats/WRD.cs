@@ -84,66 +84,78 @@ namespace FlashbackLight.Formats
 
             // Read dialogue text strings
             Strings = new List<string>();
-            if (externalStrings)
+            if (stringCount > 0)
             {
-                // Strings are stored in the "(current spc name)_text_(region).spc" file,
-                // within an STX file with the same name as the current WRD file.
-                string textSPCName = textSPCName = spcName.Insert(spcName.LastIndexOf('.'), string.Format("_text_{0}", MainForm.RegionString));
-                if (!File.Exists(textSPCName))
+                // If we already know that there are no strings,
+                // there's no need to go through the work to find them.
+
+                if (externalStrings)
                 {
-                    // If the first filename fails, we probably need to remove a duplicate
-                    // region tag from the filename before "_text_".
-                    textSPCName = textSPCName.Remove(textSPCName.LastIndexOf("_text_") - 3, 3);
+                    // Strings are stored in the "(current spc name)_text_(region).spc" file,
+                    // within an STX file with the same name as the current WRD file.
+                    string textSPCName = textSPCName = spcName.Insert(spcName.LastIndexOf('.'), string.Format("_text_{0}", MainForm.RegionString));
+                    if (!File.Exists(textSPCName))
+                    {
+                        // If the first filename fails, we probably need to remove a duplicate
+                        // region tag from the filename before "_text_".
+                        textSPCName = textSPCName.Remove(textSPCName.LastIndexOf("_text_") - 3, 3);
+
+                        if (!File.Exists(textSPCName))
+                        {
+                            // If the file still doesn't exist, it's probably not
+                            // there and the strings should just be abandoned.
+                            System.Windows.Forms.MessageBox.Show($"{spcName} does not have an associated .stx text file.",
+                                "Missing .stx file",
+                                System.Windows.Forms.MessageBoxButtons.OK,
+                                System.Windows.Forms.MessageBoxIcon.Warning,
+                                System.Windows.Forms.MessageBoxDefaultButton.Button1);
+                            return;
+                        }
+                    }
+
+                    string stxName = wrdName.Replace(".wrd", ".stx");
+                    byte[] spcData = File.ReadAllBytes(textSPCName);
+                    SPC textSPC = new SPC(spcData, textSPCName);
+
+                    Strings = new STX(textSPC.Entries[stxName].Contents).Strings;
                 }
-
-                string stxName = wrdName.Replace(".wrd", ".stx");
-                byte[] spcData = File.ReadAllBytes(textSPCName);
-                SPC textSPC = new SPC(spcData, textSPCName);
-                foreach (SPCEntry entry in textSPC.Entries)
+                else
                 {
-                    if (entry.Filename == stxName)
+                    reader.BaseStream.Seek(stringsPointer, SeekOrigin.Begin);
+                    for (ushort i = 0; i < stringCount; ++i)
                     {
-                        Strings = (new STX(entry.Contents)).Strings;
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                reader.BaseStream.Seek(stringsPointer, SeekOrigin.Begin);
-                for (ushort i = 0; i < stringCount; ++i)
-                {
-                    short stringLen = 0;
+                        short stringLen = 0;
 
-                    // The string length is a signed byte, so if it's larger than 0x7F,
-                    // that means the length is actually stored in a signed short,
-                    // since we can't have a negative string length.
-                    // ┐(´∀｀)┌
-                    if ((byte)reader.PeekChar() >= 0x80)
-                    {
-                        stringLen = reader.ReadInt16();
-                    }
-                    else
-                    {
-                        stringLen = reader.ReadByte();
-                    }
-                    stringLen += 2; // Null terminator
+                        // The string length is a signed byte, so if it's larger than 0x7F,
+                        // that means the length is actually stored in a signed short,
+                        // since we can't have a negative string length.
+                        // ┐(´∀｀)┌
+                        if ((byte)reader.PeekChar() >= 0x80)
+                        {
+                            stringLen = reader.ReadInt16();
+                        }
+                        else
+                        {
+                            stringLen = reader.ReadByte();
+                        }
+                        stringLen += 2; // Null terminator
 
-                    List<char> stringData = new List<char>(stringLen / 2);
-                    for (int j = 0; j < (stringLen / 2); ++j)
-                    {
-                        char c = Convert.ToChar(reader.ReadUInt16());
-                        stringData.Add(c);
+                        List<char> stringData = new List<char>(stringLen / 2);
+                        for (int j = 0; j < (stringLen / 2); ++j)
+                        {
+                            char c = Convert.ToChar(reader.ReadUInt16());
+                            stringData.Add(c);
 
-                        // We can't always trust stringLen apparently, so break if we've hit a null terminator.
-                        if (c == 0)
-                            break;
+                            // We can't always trust stringLen apparently, so break if we've hit a null terminator.
+                            if (c == 0)
+                                break;
+                        }
+
+                        string str = new string(stringData.ToArray());
+                        str = str.Replace("\r", "\\r");
+                        str = str.Replace("\n", "\\n");
+                        Strings.Add(str);
                     }
-
-                    string str = new string(stringData.ToArray());
-                    str = str.Replace("\r", "\\r");
-                    str = str.Replace("\n", "\\n");
-                    Strings.Add(str);
                 }
             }
         }
